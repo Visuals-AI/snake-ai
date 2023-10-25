@@ -29,6 +29,7 @@
 ```bash
 # 创建 conda 环境，将其命名为 SnakeAI，Python 版本 3.8.16
 conda create -n SnakeAI python=3.8.16
+conda init zsh
 conda activate SnakeAI
 ```
 
@@ -68,7 +69,7 @@ pip install -r requirements.txt
 
 ```bash
 cd [项目上级文件夹]/snake-ai/main
-python .\snake_game.py
+python ./snake_game.py
 ```
 
 环境配置完成后，可以在 `main/` 文件夹下运行 `test_cnn.py` 或 `test_mlp.py` 进行测试，观察两种智能代理在不同训练阶段的实际表现。
