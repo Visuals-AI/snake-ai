@@ -3,3 +3,7 @@ stable-baselines3
 sb3-contrib
 pygame
 shimmy
+tensorflow
+tensorboard_plugin_profile
+fairness_indicators 
+tensorboard-plugin-fairness-indicators
