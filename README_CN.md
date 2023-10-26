@@ -61,7 +61,7 @@ pip install tensorboard==2.13.0
 
 # 降级安装外部代码库
 pip install setuptools==65.5.0 pip==21
-pip install -r requirements.txt
+python -m pip install -r .\requirements.txt -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
 ```
 
 ### 运行测试
