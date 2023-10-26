@@ -5,5 +5,3 @@ pygame
 shimmy
 tensorflow
 tensorboard_plugin_profile
-fairness_indicators 
-tensorboard-plugin-fairness-indicators
