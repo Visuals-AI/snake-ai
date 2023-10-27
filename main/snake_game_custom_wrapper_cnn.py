@@ -50,6 +50,8 @@ class SnakeEnv(gym.Env):
         reward = 0.0
         self.reward_step_counter += 1
 
+        # 胜利奖励：
+        # 当蛇的大小达到了整个棋盘的大小（即填满了整个棋盘），蛇将获得胜利奖励，这个奖励是其最大增长的0.1倍
         if info["snake_size"] == self.grid_size: # Snake fills up the entire board. Game over.
             reward = self.max_growth * 0.1 # Victory reward
             self.done = True
@@ -61,17 +63,24 @@ class SnakeEnv(gym.Env):
             self.reward_step_counter = 0
             self.done = True
         
+        # 游戏结束的惩罚：
+        # 如果蛇碰到墙或自己，游戏结束，这时，奖励会是负数，并根据蛇的大小和最大可能增长来计算。
         if self.done: # Snake bumps into wall or itself. Episode is over.
             # Game Over penalty is based on snake size.
             reward = - math.pow(self.max_growth, (self.grid_size - info["snake_size"]) / self.max_growth) # (-max_growth, -1)            
             reward = reward * 0.1
             return obs, reward, self.done, info
           
+        # 食物奖励：
+        # 当蛇吃到食物时，奖励将基于蛇的当前大小与棋盘大小的比例。
         elif info["food_obtained"]: # Food eaten. Reward boost on snake size.
             reward = info["snake_size"] / self.grid_size
             self.reward_step_counter = 0 # Reset reward step counter
         
         else:
+
+            # 方向奖励/惩罚：
+            # 除了明显的奖励和惩罚，蛇还会根据其是否朝向食物获得一个微小的奖励或惩罚。如果蛇在最新的步骤中更接近食物，它会获得一个正奖励，反之则会受到一个小的惩罚
             # Give a tiny reward/penalty to the agent based on whether it is heading towards the food or not.
             # Not competing with game over penalty or the food eaten reward.
             if np.linalg.norm(info["snake_head_pos"] - info["food_pos"]) < np.linalg.norm(info["prev_snake_head_pos"] - info["food_pos"]):
@@ -93,9 +102,11 @@ class SnakeEnv(gym.Env):
     
     # Check if the action is against the current direction of the snake or is ending the game.
     def _check_action_validity(self, action):
-        current_direction = self.game.direction
-        snake_list = self.game.snake
+        current_direction = self.game.direction # 当前蛇的移动方向
+        snake_list = self.game.snake            # 当前蛇的身体位置
         row, col = snake_list[0]
+
+        # 根据传入的动作，此方法检查该动作是否与当前方向相反
         if action == 0: # UP
             if current_direction == "DOWN":
                 return False
@@ -120,6 +131,7 @@ class SnakeEnv(gym.Env):
             else:
                 row += 1
 
+        # 检查执行该动作后蛇的头是否会碰到墙壁或蛇自己的身体
         # Check if snake collided with itself or the wall. Note that the tail of the snake would be poped if the snake did not eat food in the current step.
         if (row, col) == self.game.food:
             game_over = (

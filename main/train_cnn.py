@@ -35,9 +35,9 @@ def linear_schedule(initial_value, final_value=0.0):
 
 def make_env(seed=0):
     def _init():
-        env = SnakeEnv(seed=seed)
-        env = ActionMasker(env, SnakeEnv.get_action_mask)
-        env = Monitor(env)
+        env = SnakeEnv(seed=seed)   # SnakeEnv 是蛇游戏的环境，它定义了游戏的状态、行动空间和奖励机制。
+        env = ActionMasker(env, SnakeEnv.get_action_mask)   # 可能是一个wrapper，它允许某些动作在某些状态下被遮蔽或禁用
+        env = Monitor(env)  # 记录环境中的交互，用于后续的分析
         env.seed(seed)
         return env
     return _init
