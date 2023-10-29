@@ -5,7 +5,20 @@ import numpy as np
 
 from snake_game import SnakeGame
 
+
+
+# 游戏环境，SnakeEnv 设计成符合 OpenAI Gym 的环境规范的
+# OpenAI Gym 提供了一个标准的环境接口，使得研究人员和开发人员可以在不同的强化学习算法上使用相同的环境，
+# 而无需对代码进行大量修改。OpenAI Gym 的环境规范主要包括以下几个核心方法：
+#   1. __init__(): 构造函数，用于初始化环境的状态和参数。
+#   2. reset(): 重置环境到一个初始状态并返回初始观测。
+#   3. step(action): 根据智能体的动作更新环境状态，并返回新的观测、奖励、是否完成以及其他有关信息。
+#   4. render(): 可选的，用于显示或渲染环境的当前状态，通常用于调试或可视化。
+# SnakeEnv 实现了这些核心方法，所以它是与 Gym 兼容的。
+# 这意味着你可以在任何支持 Gym 环境的强化学习算法上使用它。
 class SnakeEnv(gym.Env):
+
+    # 用于初始化环境的状态和参数。
     def __init__(self, seed=0, board_size=12, silent_mode=True, limit_step=True):
         super().__init__()
         self.game = SnakeGame(seed=seed, board_size=board_size, silent_mode=silent_mode)
@@ -13,8 +26,23 @@ class SnakeEnv(gym.Env):
 
         self.silent_mode = silent_mode
 
+        # 表示一个离散的动作空间，其中动作是从0开始的整数。
+        # 在这种情况下，gym.spaces.Discrete(4)表示有四个动作：0、1、2、3。这本身并没有为这些整数提供语义或描述。
+        # 换句话说，Gym并不关心每个动作的“实际”含义或名称。它只需要知道有多少个可能的动作和它们的范围。
+        # 这使得定义动作空间变得非常通用和灵活，因为你可以在实际的step方法中为每个数字定义具体的动作语义。
+        # 这种设计的目的是为了使环境定义尽可能地通用和简洁。
         self.action_space = gym.spaces.Discrete(4) # 0: UP, 1: LEFT, 2: RIGHT, 3: DOWN
+        # 对于更复杂的动作空间，例如在网游中同时处理移动和释放技能，你可以使用更复杂的动作空间表示方法。
+        # OpenAI Gym提供了多种动作空间类型，其中一种是spaces.Tuple，允许你组合多个动作空间。
+        # 甚至如果你的动作空间是连续的，例如一个机器人的关节角度或加速器的压力，
+        # 那么你可能会使用 spaces.Box 来表示这个空间。
         
+        
+        # 观察值的格式或结构应与observation_space的声明相一致。
+        # observation_space 被定义为一个维度为 (84, 84, 3) 的框 (gym.spaces.Box)，其中每个元素的值都在0到255之间。
+        # 因此，_generate_observation 返回的观察值应该满足这些约束。
+        # 如对于这种图像形式的观察值，强化学习算法常常使用卷积神经网络 (Convolutional Neural Networks, CNN)。CNN 能够从图像中提取特征，并根据这些特征来决策。
+        # Gym提供了一个框架，observation_space 就是声明了一个统一的接口来与环境互动。实际上，如何处理和解释这些观察值是强化学习模型的任务。
         self.observation_space = gym.spaces.Box(
             low=0, high=255,
             shape=(84, 84, 3),
@@ -34,6 +62,7 @@ class SnakeEnv(gym.Env):
             self.step_limit = 1e9 # Basically no limit.
         self.reward_step_counter = 0
 
+    # 重置环境到一个初始状态并返回初始观测。
     def reset(self):
         self.game.reset()
 
@@ -43,6 +72,12 @@ class SnakeEnv(gym.Env):
         obs = self._generate_observation()
         return obs
     
+    # 根据智能体的动作更新环境状态，并返回新的观测、奖励、是否完成以及其他有关信息。
+    # 返回值是 obs, reward, done, info
+    #   obs: 产生当前环境状态的观察值，代表了环境在执行动作之后的新状态。在很多游戏和任务中，观察值 (observation) 为智能体提供了关于环境当前状态的必要信息，以便它能做出下一个决策。在 SnakeEnv 的上下文中，obs 可能包含了游戏板上的蛇、食物和其他可能的障碍物的当前位置。对于深度学习和强化学习模型，这些观察值会被用作输入来决策下一步的动作。
+    #   reward:
+    #   done:
+    #   info: 是一个自定义字典（或称为哈希），它提供了关于当前步骤或环境的额外信息。Gym不会直接使用info字典来“学习”。换句话说，标准的强化学习算法在更新策略或学习模型时并不依赖于info。然而，info可以在训练时为研究人员或开发者提供有用的上下文或调试信息。
     def step(self, action):
         self.done, info = self.game.step(action) # info = {"snake_size": int, "snake_head_pos": np.array, "prev_snake_head_pos": np.array, "food_pos": np.array, "food_obtained": bool}
         obs = self._generate_observation()
@@ -94,6 +129,7 @@ class SnakeEnv(gym.Env):
 
         return obs, reward, self.done, info
     
+    # 可选的，用于显示或渲染环境的当前状态，通常用于调试或可视化。
     def render(self):
         self.game.render()
 
@@ -155,6 +191,11 @@ class SnakeEnv(gym.Env):
         else:
             return True
 
+    # 返回一个维度为 (84, 84, 3) 的 NumPy 数组。这意味着它是一个84x84的图像，并有三个颜色通道（RGB）。
+    # 因此，这个观察值实际上是一个图像，它展示了游戏板上的蛇、食物和其他物体的位置。
+    # 观察值的格式或结构应与observation_space的声明相一致。
+    # observation_space 被定义为一个维度为 (84, 84, 3) 的框 (gym.spaces.Box)，其中每个元素的值都在0到255之间。
+    # 因此，_generate_observation 返回的观察值应该满足这些约束。
     # EMPTY: BLACK; SnakeBODY: GRAY; SnakeHEAD: GREEN; FOOD: RED;
     def _generate_observation(self):
         obs = np.zeros((self.game.board_size, self.game.board_size), dtype=np.uint8)
